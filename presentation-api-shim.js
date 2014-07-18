@@ -398,7 +398,7 @@
       cast.receiver.CastMessageBus.MessageType.JSON);
 
     var that = this;
-    customMessageBus.addEventListener('message', function (event) {
+    this.customMessageBus.addEventListener('message', function (event) {
       if (that.onmessage) {
         that.onmessage(event.data);
       }
@@ -466,14 +466,15 @@
     // perspective)
     var startCastReceiverManager = function () {
       var castReceiverManager = null;
-      var slidy = null;
+      var session = null;
 
       castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+      session = new CastReceiverSession(castReceiverManager);
       castReceiverManager.start();
       castReceiverManager.onReady = function () {
         if (that.onpresent) {
           that.onpresent({
-            session: new CastReceiverSession(castReceiverManager)
+            session: session
           });
         }
       };
