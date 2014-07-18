@@ -159,7 +159,7 @@
             console.error('Could not create Cast session', error);
           }
           reject();
-        });
+        }, sessionRequest);
       };
 
       var apiConfig = new chrome.cast.ApiConfig(
