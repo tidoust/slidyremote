@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf8" />
+    <title>HTML Slidy remote</title> 
+    <meta name="copyright" 
+     content="Copyright &#169; 2014 W3C (MIT, ERCIM, Keio, Beihang)" /> 
+    <link rel="stylesheet" type="text/css" media="screen, projection, print" 
+     href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" /> 
+    <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js" 
+     charset="utf-8" type="text/javascript"></script> 
+    <style type="text/css">
+    </style>
+  </head>
+  <body>
+
+    <div class="slide cover"> 
+     <h1>HTML Slidy remote
+     <br/>A Presentation API demo</h1>
+     <p>François Daoust, <a href="mailto:fd@w3.org">fd@w3.org</a>, <a href="http://twitter.com/tidoust">@tidoust</a></p> 
+    </div>
+
+    <div class="slide">
+      <h1>What is the Presentation API?</h1>
+      <ul>
+        <li>The <a href="http://webscreens.github.io/presentation-api/">Presentation API</a> defines an API that allows a web application to request display of web content on a connected display</li>
+        <li>Targeted displays include those connected through HDMI, VGA, Miracast, WiDi, Airplay, Google Cast, etc.</li>
+        <li>The <a href="http://www.w3.org/community/webscreens/">Second Screen Presentation Community Group</a> develops the application</li>
+        <li>The Presentation API is <strong>not yet stable</strong></li>
+        <li><strong>No Web browser</strong> implements the Presentation API at this stage</li>
+      </ul>
+    </div>
+
+    <div class="slide">
+      <h1>JavaScript shim</h1>
+      <p>The JavaScript shim featured in the HTML Slidy demo extends the one of the <a href="http://webscreens.github.io/demo/">first demo</a>:</p>
+      <ul>
+        <li><strong>Message passing</strong> is used to communicate between the sender and the receiver.</li>
+        <li><strong>Google Cast devices</strong> are supported, provided the <a href="https://chrome.google.com/webstore/detail/google-cast/boadgeojelhgndaghljhdicfkmllpafd?hl=en">Google Cast extension</a> is installed</li>
+      </ul>
+    </div>
+
+    <div class="slide">
+      <h1>Restricted to Google Chrome/Chromium</h1>
+      <p>Support for actual second screens either requires:</p>
+      <ul>
+        <li>the <a href="http://webscreens.github.io/demo/#binaries">modified version of Chromium</a> provided by Intel's Open Source Technology Center</li>
+        <li>Google Chrome and the <a href="https://chrome.google.com/webstore/detail/google-cast/boadgeojelhgndaghljhdicfkmllpafd?hl=en">Google Cast extension</a>
+      </ul>
+
+      <p>The demo falls back to opening the slide show in a separate window when it cannot detect a second screen.</p>
+    </div>
+
+    <div class="slide">
+      <h1>Restricted to a couple of origins</h1>
+      <p>The receiver side opens up the requested slide show in a child iframe. To control that iframe, the slide show <strong>must</strong> be served from the same origin as the receiver app.</p>
+      <p>The demo only knows about two receiver apps:</p>
+      <ul>
+        <li><small><code><strong>https://tidoust.github.io</strong>/slidyremote/receiver.html</code></small></li>
+        <li><small><code><strong>https://www.w3.org</strong>/2014/secondscreen/demo/slidyremote/receiver.html</code></small></li>
+      </ul>
+      <p>Receiver apps have been published as custom Google Cast receiver apps.
+        <br/>As such, they may run on any Google Cast device.</p>
+    </div>
+
+    <div class="slide">
+      <h1>How the demo works: sender side</h1>
+      <p>When the user enters the URL of a slide show, the demo page:</p>
+      <ul>
+        <li>checks its origin and rejects unknown ones;</li>
+        <li>calls <code>navigator.presentation.requestSession</code> with the appropriate receiver app;</li>
+        <li>uses the returned <code>PresentationSession</code> object to tell the receiver app to load the slideshow;</li>
+        <li>displays the Slidy remote</li>
+        <li>sends all Slidy commands as <code>PresentationSession</code> messages to the receiver app</li>
+      </ul>
+    </div>
+
+    <div class="slide">
+      <h1>How the demo work: receiver side</h1>
+      <p>When the receiver app is loaded, it:</p>
+      <ul>
+        <li>listens to <code>navigator.presentation.onmessage</code> events</li>
+        <li>loads the appropriate slide show in a child <code>iframe</code> when so requested</li>
+        <li>converts Slidy command messages to actual Slidy functions calls in the child <code>iframe</code></li>
+      </ul>
+    </div>
+  </body>
+</html>
