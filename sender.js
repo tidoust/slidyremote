@@ -3,6 +3,38 @@
  */
 window.onload = function () {
   /**
+   * Register the Google Cast receiver application to the Presentation API
+   * shim so that it knows which application ID to use.
+   *
+   * Note the first one is for dev purpose and means "same origin" as the one
+   * of the page.
+   *
+   * That step is to disappear when the Presentation API is supported by
+   * Google Cast devices.
+   */
+  var receiverApps = [
+    {
+      origin: null,
+      url: 'receiver.html',
+      castId: '06F76BDC'
+    },
+    {
+      origin: 'https://tidoust.github.io',
+      url: 'https://tidoust.github.io/slidyremote/receiver.html',
+      castId: 'AA65CCFD'
+    },
+    {
+      origin: 'https://www.w3.org',
+      url: 'https://www.w3.org/2014/secondscreen/demo/slidyremote/receiver.html',
+      castId: '2F330A8F'
+    }
+  ];
+  receiverApps.forEach(function (app) {
+    navigator.presentation.registerCastApplication(app.url, app.castId);
+  });
+
+
+  /**
    * Pointer to the projected slide show if there is one
    */
   var presentationSession = null;
@@ -38,29 +70,6 @@ window.onload = function () {
 
 
   /**
-   * Register the Google Cast receiver application to the Presentation API
-   * shim so that it knows which application ID to use.
-   *
-   * That step is to disappear when the Presentation API is supported by
-   * Google Cast devices.
-   */
-  var receiverApps = {
-    local: {
-      url: 'receiver.html',
-      castId: '06F76BDC'
-    },
-    w3c: {
-      url: 'http://www.w3.org/2014/secondscreen/demo/slidyremote/receiver.html',
-      castId: ''
-    }
-  };
-  navigator.presentation.registerCastApplication(
-    receiverApps.local.url, receiverApps.local.castId);
-  navigator.presentation.registerCastApplication(
-    receiverApps.w3c.url, receiverApps.w3c.castId);
-
-
-  /**
    * Project the Slidy slideshow targeted by the URL entered by the user
    * to a second screen.
    */
@@ -86,27 +95,24 @@ window.onload = function () {
     }
 
     var receiverApp = null;
-    if (url.hostname === baseUrl.hostname) {
-      receiverApp = receiverApps.local.url;
-    }
-    else if (url.hostname === 'www.w3.org') {
-      receiverApp = receiverApps.w3c.url;
-    }
-    else {
+    receiverApps.forEach(function (app) {
+      if ((app.origin && (app.origin === url.origin)) ||
+          (!app.origin && (url.origin === baseUrl.origin))) {
+        receiverApp = app;
+      }
+    });
+    if (!receiverApp) {
       reportError('No HTML Slidy receiver application known for the origin "' +
-        url.hostname + '". The demo only supports the origins "' +
-        baseUrl.hostname + '" and "www.w3.org"');
+        url.hostname + '". The demo is typically limited to the origins ' +
+        '<code>https://www.w3.org</code> and <code>https://tidoust.github.io</code>');
       return false;
     }
-
-    formSection.hidden = true;
-    remoteSection.hidden = false;
     
     // Open the Slidy receiver application on a second screen, on a Chromecast
     // device if one is available, an attached screen if the user uses the
     // appropriate custom Google Chrome build, falling back to a separate
     // window if possible.
-    presentationSession = navigator.presentation.requestSession(receiverApp);
+    presentationSession = navigator.presentation.requestSession(receiverApp.url);
 
     // Tell our Slidy remote about the created presentation session so that
     // local keystrokes effectively run the appropriate Slidy commands on the
@@ -120,6 +126,8 @@ window.onload = function () {
       if (this.state === 'connected') {
         console.info('Presentation session connected');
         window.w3c_slidy.loadSlideshow(url.toString());
+        formSection.hidden = true;
+        remoteSection.hidden = false;
       }
       else {
         console.warn('Presentation session disconnected');
