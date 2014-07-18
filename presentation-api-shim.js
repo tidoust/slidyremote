@@ -227,17 +227,19 @@
     this.remoteWindow = remoteWindow;
 
     var that = this;
-    this.remoteWindow.onunload = function () {
-      that.state = 'disconnected';
-      if (that.onstatechange) {
-        that.onstatechange(that.state);
-      }
-    };
 
     window.addEventListener('message', function (event) {
       if (event.source === remoteWindow) {
-        if (that.onmessage) {
-          that.onmessage(event.data);
+        if (event.data === 'receivershutdown') {
+          that.state = 'disconnected';
+          if (that.onstatechange) {
+            that.onstatechange(that.state);
+          }
+        }
+        else {
+          if (that.onmessage) {
+            that.onmessage(event.data);
+          }
         }
       }
     }, false);
@@ -496,6 +498,11 @@
       window.addEventListener('load', function () {
         if (window.opener) {
           window.opener.postMessage('receiverready', '*');
+        }
+      });
+      window.addEventListener('unload', function () {
+        if (window.opener) {
+          window.opener.postMessage('receivershutdown', '*');
         }
       });
     };
