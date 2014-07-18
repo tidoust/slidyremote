@@ -1,0 +1,190 @@
+<html>
+  <head>
+    <meta charset="utf8" />
+    <title>HTML Slidy remote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css" />
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <script type="text/javascript" src="presentation-api-shim.js"></script>
+    <script type="text/javascript" src="slidy.js"></script>
+    <script type="text/javascript" src="slidy-remote.js"></script>
+    <script type="text/javascript" src="sender.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>HTML Slidy remote</h1>
+      <p>A Presentation API demo</p>
+    </header>
+
+    <div id="form">
+      <aside>
+        <p>This page is a <em>proof-of-concept</em> demo for the <a href="http://webscreens.github.io/presentation-api/">Presentation API</a> which is being developed by the <a href="http://www.w3.org/community/webscreens/">Second Screen Presentation Community Group</a> in W3C.</p>
+      </aside>
+
+      <form class="pure-form pure-form-stacked">
+        <label for="url">URL of the slide show to project:
+          <br/>(note slide show origin <strong>must be</strong> that of this page or <code>www.w3.org</code>)</label>
+        <input id="url" name="url" type="text" value="http://www.w3.org/Talks/Tools/Slidy2/Overview.html" class="pure-input-1"/>
+        <input type="submit" value="Open slide show" class="pure-button pure-button-primary" />
+      </form>
+
+      <section id="error" class="error" hidden>
+        <p></p>
+        <button class="pure-button pure-button-primary">Dismiss error message</button> 
+      </section>
+
+      <p>Instructions:</p>
+      <ol>
+        <li>Enter the URL of a slide show made with <a href="http://www.w3.org/Talks/Tools/Slidy2/Overview.html">HTML Slidy</a> above</li>
+        <li>Hit <code>Open slide show</code>. The slide show will open on a second screen if available or in a separate window otherwise</li>
+        <li>Use the Slidy remote on this page to control the running slide show (key presses and gestures are supported as well)</li>
+      </ol>
+
+      <aside class="warning">
+        <p><strong>Support for second screens only works in Google Chrome under certain conditions</strong>, see <a href="#implementation">Implementation details</a>. The demo falls back to opening the slide show in a pop-up window when it cannot find second screens.</p>
+        <p>The code also uses a couple of advanced JavaScript features (e.g. <code>Promise</code>, <code>Object.keys</code>, <code>URL</code>) that may not yet be supported on all Web browsers.</p>
+        <p id="nochrome" hidden>You seem not to be using Google Chrome in particular, so note the demo will be somewhat limited in your case!</p>
+      </aside>
+
+
+      <section id="implementation">
+        <h2>Implementation details</h2>
+
+        <h3>Presentation API shim</h3>
+        <p>Under the hoods, the demo uses a <a href="presentation-api-shim.js">JavaScript shim</a> of the Presentation API that supports:</p>
+
+        <dl>
+          <dt>Google Cast devices</dt>
+          <dd>Support for Google Cast devices requires Google Chrome with the <a href="https://chrome.google.com/webstore/detail/google-cast/boadgeojelhgndaghljhdicfkmllpafd?hl=en">Google Cast extension</a></dd>
+
+          <dt>Second screens attached through a video port</dt>
+          <dd>Support for these second screens requires that you run this page in <a href="http://webscreens.github.io/demo/#binaries">a modified version of Chromium</a> specifically prepared to demo the Presentation API.</dd>
+          <dd>Supported attachment methods include regular video ports (HDMI, VGA) as well as wireless equivalent (e.g. Miracast, WiDi).</dd>
+          <dd>If there are more than one second screen available, the demo selects the first one.</dd>
+
+          <dt>Separate window</dt>
+          <dd>This is used as a fallback when the shim cannot find available second screens</dd>
+          <dd>Note that your Web browser is likely going to block this attempt to open a pop-up window by default! It should offer a way to authorize it though.</dd>
+        </dl>
+
+        <h3>How the demo works</h3>
+        <p>When the user requests it, this page calls <code>navigator.presentation.requestSession</code> to open the appropriate HTML Slidy receiver application on a second screen. That returns a <code>PresentationSession</code> object that this page then uses to instruct the HTML Slidy receiver application to open the requested slide show and to send Slidy commands afterwards.</p>
+
+        <p>The HTML Slidy receiver application is an empty page that listens to messages it receives from <code>navigator.presentation.onmessage</code>. When it receives the appropriate message, it loads the requested slide show in a child <code>iframe</code> (that takes up 100% of the viewport) and controls the Slidy instance of the slide show within that iframe in reaction to further presentation messages it receives.</p>
+
+        <p>To be able to control its child iframe, the origins of the HTML Slidy receiver application and of the slide show <strong>must</strong> match. This page only knows of two HTML Slidy receiver applications:</p>
+        <ul>
+          <li>The receiver that ships with this page and is thus bound to the same origin as this page</li>
+          <li>The receiver that runs on <code>www.w3.org</code></li>
+        </ul>
+        <p>You may extend the code to support receiver applications on a different domain name.</li>
+
+        <h3>Why using an iframe on the receiving side?</h3>
+        <p>Since the <code>iframe</code> triggers the same origin constraint, it would be tempting to drop it altogether. It could be done in theory provided HTML Slidy is updated to listen to <code>navigator.presentation.onmessage</code> events.</p>
+
+        <p>In practice, this would require slide shows to use that updated (and likely unstable) version of HTML Slidy, which is probably not a good idea for <em>actual</em> slide shows. Also note that there is no way to use arbitrary receiver applications with Google Cast devices for the time being: each receiver application needs to be registered with Google, meaning slide shows would first need to be registered somehow before that demo could be used.</p>
+
+        <h3>Slidy commands</h3>
+        <p>Slidy commands can be sent to the second screen using the Slidy remote that this page will display once the presentation session has started. Key presses and gestures are also supported.</p>
+
+        <p>There are a few known restrictions at this stage:</p>
+        <ul>
+          <li>no way to scroll the current slide on the second screen</li>
+          <li>no way to interact with the table of contents</li>
+          <li>no way to interact with contents on the slide show (e.g. video controls)</li>
+        </ul>
+      </section>
+    </div>
+
+    <div id="remote" hidden>
+      <div class="remote">
+        <div class="pure-g">
+          <div class="pure-u-2-3"></div>
+          <div class="pure-u-1-3">
+            <button class="pure-button off" id="remote-off">
+              <i class="fa fa-power-off"></i>
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="pure-g">
+          <div class="pure-u-1-2">
+            <button class="pure-button pure-button-primary" id="remote-previous">
+              <i class="fa fa-backward"></i>
+              <span>Previous</span>
+            </button>
+          </div>
+          <div class="pure-u-1-2">
+            <button class="pure-button pure-button-primary" id="remote-next">
+              <i class="fa fa-forward"></i>
+              <span>Next</span>
+            </button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="pure-g">
+          <div class="pure-u-1-2">
+            <button class="pure-button" id="remote-first">
+              <i class="fa fa-fast-backward"></i>
+              <span>First</span>
+            </button>
+          </div>
+          <div class="pure-u-1-2">
+            <button class="pure-button" id="remote-last">
+              <i class="fa fa-fast-forward"></i>
+              <span>Last</span>
+            </button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="pure-g">
+          <div class="pure-u-1-2">
+            <button class="pure-button" id="remote-smaller">
+              <i class="fa fa-minus"></i>
+              <span>Smaller</span>
+            </button>
+          </div>
+          <div class="pure-u-1-2">
+            <button class="pure-button" id="remote-bigger">
+              <i class="fa fa-plus"></i>
+              <span>Bigger</span>
+            </button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="pure-g">
+          <div class="pure-u-1-3">
+            <button class="pure-button secondary" id="remote-toc">
+              <span>Toggle</span>
+              TOC
+            </button>
+          </div>
+          <div class="pure-u-1-3">
+            <button class="pure-button secondary" id="remote-footer">
+              <span>Toggle</span>
+              footer
+            </button>
+          </div>
+          <div class="pure-u-1-3">
+            <button class="pure-button secondary" id="remote-all">
+              All slides
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p>Note you may also enter commands through the keyboard or use gestures on touch-enabled screens.</p>
+    </div>
+  </body>
+</html>

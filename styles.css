@@ -1,0 +1,65 @@
+body {
+  margin: 0.5em;
+}
+
+header > p {
+  margin-top: -1.3em;
+  font-size: 1.25em;
+}
+
+aside {
+  background: #d9edf7;
+  padding: 0.3em 1em;
+  border-radius: 3px;
+  color: #000000;
+}
+
+form {
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+form input {
+  margin: 1em 0;
+}
+
+.warning {
+  background: #fcf8e3;
+}
+
+.error {
+  padding: 1em;
+  border-radius: 3px;
+  background: #f2dede;
+}
+
+
+dt {
+  font-weight: bold;
+  margin-top: 1em;
+}
+
+.remote {
+  max-width: 20em;
+  text-align: center;
+}
+
+.off {
+  background: rgb(202, 60, 60);
+  color: white;
+}
+
+.remote button {
+  width: 90%;
+}
+
+.secondary {
+  background: rgb(66, 184, 221);
+  color: white;
+  font-size: 75%;
+  width: 90%;
+}
+
+hr {
+  margin: 1em 0;
+}
