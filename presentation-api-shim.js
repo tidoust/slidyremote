@@ -288,9 +288,12 @@
         return;
       }
 
-      presentationWindow.addEventListener('load', function () {
-        presentationWindow.postMessage('presentation', '*');
-        resolve(new AttachedSession(presentationWindow));
+      window.addEventListener('message', function (event) {
+        if ((event.source === presentationWindow) &&
+            (event.data === 'receiverready')) {
+          presentationWindow.postMessage('presentation', '*');
+          resolve(new AttachedSession(presentationWindow));
+        }
       }, false);
     });
   };
@@ -474,8 +477,9 @@
       };
     };
 
-    // Wait for sender to send a "presentation" event. That will be a clear
-    // indication that the shim is running within a receiver application.
+    // Tell the opener that we're ready and wait for it to send a
+    // "presentation" event. That will be a clear indication that the shim
+    // is running within a receiver application.
     var waitForPresentationEvent = function () {
       var messageEventListener = function (event) {
         if ((event.source === window.opener) &&
@@ -489,6 +493,11 @@
         }
       };
       window.addEventListener('message', messageEventListener, false);
+      window.addEventListener('load', function () {
+        if (window.opener) {
+          window.opener.postMessage('receiverready', '*');
+        }
+      });
     };
 
     // NB: no better way to tell whether we're running on a Google Cast device
