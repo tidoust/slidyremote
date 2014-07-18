@@ -1,3 +1,8 @@
+/**
+ * @fileOverview Code needed by the HTML Slidy receiver application to
+ * listen to messages from the presentation sender and react accordingly,
+ * dispatching received commands to the controlled slide show.
+ */
 window.onload = function () {
   /**
    * Pointer to the "w3c_slidy" object in controlled slideshow
@@ -31,7 +36,7 @@ window.onload = function () {
         return;
       }
       else {
-        // Send command to controlled Slidy
+        // Send command to controlled Slidy instance
         params = message.params || [];
         controlledSlidy[message.cmd].apply(controlledSlidy, params);
       }

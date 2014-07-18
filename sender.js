@@ -1,6 +1,15 @@
+/**
+ * @fileOverview Code needed to run the HTML Slidy remote demo
+ */
 window.onload = function () {
+  /**
+   * Pointer to the projected slide show if there is one
+   */
   var presentationSession = null;
 
+  /**
+   * A few references to useful DOM elements
+   */
   var formSection = document.getElementById('form');
   var remoteSection = document.getElementById('remote');
   var errorSection = document.getElementById('error');
@@ -15,7 +24,7 @@ window.onload = function () {
   }
 
   /**
-   * Reports an error to the user
+   * Handle error messages
    */
   var reportError = function (message) {
     errorSection.querySelector('p').innerHTML = message;
@@ -49,6 +58,7 @@ window.onload = function () {
     receiverApps.local.url, receiverApps.local.castId);
   navigator.presentation.registerCastApplication(
     receiverApps.w3c.url, receiverApps.w3c.castId);
+
 
   /**
    * Project the Slidy slideshow targeted by the URL entered by the user
