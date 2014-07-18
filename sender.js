@@ -107,6 +107,8 @@ window.onload = function () {
         '<code>https://www.w3.org</code> and <code>https://tidoust.github.io</code>');
       return false;
     }
+    console.log('Using receiver app "' + receiverApp.url + '" ' +
+      '(castId: ' + receiverApp.castId + ')');
     
     // Open the Slidy receiver application on a second screen, on a Chromecast
     // device if one is available, an attached screen if the user uses the
