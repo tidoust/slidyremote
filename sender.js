@@ -81,10 +81,16 @@ window.onload = function () {
       return false;
     }
 
+    // Automatically convert http://www.w3.org into https://www.w3.org URLs
+    var enteredUrl = document.querySelector('#url').value;
+    if (enteredUrl.match(/^http:\/\/www.w3.org/)) {
+      enteredUrl = 'https://' + enteredUrl.substring(7);
+    }
+
     var url = null;
     var baseUrl = null;
     try {
-      url = new URL(document.querySelector('#url').value, document.baseURI);
+      url = new URL(enteredUrl, document.baseURI);
       baseUrl = new URL(document.baseURI);
     }
     catch (err) {

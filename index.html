@@ -29,8 +29,7 @@
       </aside>
 
       <form class="pure-form pure-form-stacked">
-        <label for="url">URL of the slide show to project:
-          <br/>(note slide show origin <strong>must be</strong> one of <code>https://www.w3.org</code> or <code>https://tidoust.github.io</code>)</label>
+        <label for="url">URL of the slide show to project:</label>
         <input id="url" name="url" type="text" value="https://tidoust.github.io/slidyremote/slideshow/" list="talks" class="pure-input-1"/>
         <datalist id="talks">
           <option value="https://tidoust.github.io/slidyremote/slideshow/" />
@@ -39,6 +38,7 @@
           <option value="http://www.w3.org/2009/Talks/03-mobileinternet/" />
         </datalist>
         <input type="submit" value="Open slide show" class="pure-button pure-button-primary" />
+        <br/>(note slide show origin <strong>must be</strong> one of <code>http(s)://www.w3.org</code> or <code>https://tidoust.github.io</code>)
       </form>
 
       <section id="error" class="error" hidden>
