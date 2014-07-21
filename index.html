@@ -38,7 +38,6 @@
           <option value="http://www.w3.org/2009/Talks/03-mobileinternet/" />
         </datalist>
         <input type="submit" value="Open slide show" class="pure-button pure-button-primary" />
-        <br/>(note slide show origin <strong>must be</strong> one of <code>http(s)://www.w3.org</code> or <code>https://tidoust.github.io</code>)
       </form>
 
       <section id="error" class="error" hidden>
@@ -48,20 +47,24 @@
 
       <p>Instructions:</p>
       <ol>
-        <li>Enter the URL of a slide show made with <a href="http://www.w3.org/Talks/Tools/Slidy2/Overview.html">HTML Slidy</a> above</li>
-        <li>Hit <code>Open slide show</code>. The slide show will open on a second screen if available or in a separate window otherwise</li>
+        <li>Enter the URL of a slide show made with <a href="http://www.w3.org/Talks/Tools/Slidy2/Overview.html">HTML Slidy</a> above. Note the slidy show origin <strong>must be</strong> one of <code>http(s)://www.w3.org</code> or <code>https://tidoust.github.io</code>.</li>
+        <li>Hit <code>Open slide show</code>. The slide show will open on a second screen if available or in a separate window otherwise, provided you allow that window to pop-up!</li>
         <li>Use the Slidy remote on this page to control the running slide show (key presses and gestures are supported as well)</li>
       </ol>
 
       <aside class="warning">
-        <p><strong>Support for second screens only works in Google Chrome under certain conditions</strong>, see <a href="#implementation">Implementation details</a>. The demo falls back to opening the slide show in a pop-up window when it cannot find second screens.</p>
-        <p>The code also uses a couple of advanced JavaScript features (e.g. <code>Promise</code>, <code>Object.keys</code>, <code>URL</code>) that may not yet be supported on all Web browsers.</p>
+        <p><strong>Support for second screens only works in Google Chrome under certain conditions</strong>, see <a href="#implementation">Implementation details</a>.
+          <br/>The demo falls back to opening the slide show in a pop-up window when it cannot find second screens.
+          <br/>Your browser may block the pop-up window by default.</p>
+        <p>The code also uses a couple of advanced JavaScript features (e.g. <code>Promise</code>, <code>Object.keys</code>, <code>URL</code>) that are not yet supported on all Web browsers.</p>
         <p id="nochrome" hidden>You seem not to be using Google Chrome in particular, so note the demo will be somewhat limited in your case!</p>
       </aside>
 
 
       <section id="implementation">
         <h2>Implementation details</h2>
+
+        <p>The <a href="http://github.com/tidoust/slidyremote">source code</a> is available on GitHub.</p>
 
         <h3>Presentation API shim</h3>
         <p>Under the hoods, the demo uses a <a href="presentation-api-shim.js">JavaScript shim</a> of the Presentation API that supports:</p>
@@ -81,21 +84,21 @@
         </dl>
 
         <h3>How the demo works</h3>
-        <p>When the user requests it, this page calls <code>navigator.presentation.requestSession</code> to open the appropriate HTML Slidy receiver application on a second screen. That returns a <code>PresentationSession</code> object that this page then uses to instruct the HTML Slidy receiver application to open the requested slide show and to send Slidy commands afterwards.</p>
+        <p>When the user requests to present the given slide show, the code of this page calls <code>navigator.presentation.requestSession</code> to open the appropriate HTML Slidy receiver application on a second screen. That returns a <code>PresentationSession</code> object used to instruct the HTML Slidy receiver application to open the requested slide show and to send Slidy commands afterwards.</p>
 
-        <p>The HTML Slidy receiver application is an empty page that listens to messages it receives from <code>navigator.presentation.onmessage</code>. When it receives the appropriate message, it loads the requested slide show in a child <code>iframe</code> (that takes up 100% of the viewport) and controls the Slidy instance of the slide show within that iframe in reaction to further presentation messages it receives.</p>
+        <p>The HTML Slidy receiver application is an empty page that listens to messages it receives from <code>navigator.presentation.onmessage</code>. When it receives the appropriate message, it loads the requested slide show in a child <code>iframe</code> that takes up 100% of the viewport and controls the Slidy instance of the slide show within that iframe in reaction to further presentation messages it receives.</p>
 
-        <p>To be able to control its child iframe, the origins of the HTML Slidy receiver application and of the slide show <strong>must</strong> match. This page only knows of two HTML Slidy receiver applications:</p>
+        <p>Due to usual security restrictions, the origins of the HTML Slidy receiver application and of the slide show <strong>must</strong> match, otherwise the receiver application cannot control the slide show. This page only knows of two HTML Slidy receiver applications:</p>
         <ul>
-          <li>The receiver that ships with this page and is thus bound to the same origin as this page</li>
-          <li>The receiver that runs on <code>www.w3.org</code></li>
+          <li>The receiver that ships with this page, bound to <code>https://tidoust.github.io</code></li>
+          <li>A receiver that runs on the W3C Web site, bound to <code>https://www.w3.org</code></li>
         </ul>
-        <p>You may extend the code to support receiver applications on a different domain name.</li>
+        <p>You may extend the code to support receiver applications on other domain names.</li>
 
         <h3>Why using an iframe on the receiving side?</h3>
         <p>Since the <code>iframe</code> triggers the same origin constraint, it would be tempting to drop it altogether. It could be done in theory provided HTML Slidy is updated to listen to <code>navigator.presentation.onmessage</code> events.</p>
 
-        <p>In practice, this would require slide shows to use that updated (and likely unstable) version of HTML Slidy, which is probably not a good idea for <em>actual</em> slide shows. Also note that there is no way to use arbitrary receiver applications with Google Cast devices for the time being: each receiver application needs to be registered with Google, meaning slide shows would first need to be registered somehow before that demo could be used.</p>
+        <p>In practice, this would require slide shows to use that updated (and likely unstable) version of HTML Slidy, which is probably not a good idea for <em>actual</em> slide shows. Also note that there is no way to run arbitrary receiver applications with Google Cast devices for the time being: any receiver application must first be registered with Google. Having to register all existing slide shows would be somewhat tedious.</p>
 
         <h3>Slidy commands</h3>
         <p>Slidy commands can be sent to the second screen using the Slidy remote that this page will display once the presentation session has started. Key presses and gestures are also supported.</p>
