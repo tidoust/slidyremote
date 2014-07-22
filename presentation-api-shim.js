@@ -589,6 +589,12 @@
             that.onstatechange();
           }
         }
+      }, function () {
+        console.warn('could not create presentation session on second screen');
+        that.state = 'disconnected';
+        if (that.onstatechange) {
+          that.onstatechange();
+        }
       });
   };
 
