@@ -48,6 +48,13 @@ window.onload = function () {
    */
   var presentationSession = null;
 
+
+  /**
+   * Whether the slide show has been projected for real or not
+   */
+  var presentationSessionConnected = false;
+
+
   /**
    * A few references to useful DOM elements
    */
@@ -122,6 +129,7 @@ window.onload = function () {
     // appropriate custom Google Chrome build, falling back to a separate
     // window if possible.
     presentationSession = navigator.presentation.requestSession(receiverApp.url);
+    presentationSessionConnected = false;
 
     // Tell our Slidy remote about the created presentation session so that
     // local keystrokes effectively run the appropriate Slidy commands on the
@@ -134,13 +142,21 @@ window.onload = function () {
     presentationSession.onstatechange = function () {
       if (this.state === 'connected') {
         console.info('Presentation session connected');
+        presentationSessionConnected = true;
         window.w3c_slidy.loadSlideshow(url.toString());
         formSection.hidden = true;
         remoteSection.hidden = false;
       }
       else {
         console.warn('Presentation session disconnected');
+        if (!presentationSessionConnected) {
+          reportError('The presentation session could not be created.' +
+            ' Your browser may have blocked the pop-up window.' +
+            ' Please ensure that the page is allowed to open pop-up windows' +
+            ' and try again.');
+        }
         presentationSession = null;
+        presentationSessionConnected = false;
         window.w3c_slidy.closePresentation();
         formSection.hidden = false;
         remoteSection.hidden = true;
@@ -158,6 +174,7 @@ window.onload = function () {
     if (presentationSession) {
       presentationSession.close();
       presentationSession = null;
+      presentationSessionConnected = false;
       window.w3c_slidy.closePresentation();
     }
     formSection.hidden = false;
