@@ -3,6 +3,15 @@
  */
 window.onload = function () {
   /**
+   * Warn user if page is not running in Chrome or Chromium
+   */
+  if (!navigator.userAgent.match(/Chrome\//) &&
+      !navigator.userAgent.match(/Chromium\//)) {
+    document.getElementById('nochrome').hidden = false;
+  }
+
+
+  /**
    * Register the Google Cast receiver application to the Presentation API
    * shim so that it knows which application ID to use.
    *
@@ -46,14 +55,6 @@ window.onload = function () {
   var remoteSection = document.getElementById('remote');
   var errorSection = document.getElementById('error');
 
-
-  /**
-   * Warn user if page is not running in Chrome or Chromium
-   */
-  if (!navigator.userAgent.match(/Chrome\//) &&
-      !navigator.userAgent.match(/Chromium\//)) {
-    document.getElementById('nochrome').hidden = false;
-  }
 
   /**
    * Handle error messages
