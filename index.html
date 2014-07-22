@@ -28,32 +28,38 @@
         <p>This page is a <em>proof-of-concept</em> demo for the <a href="http://webscreens.github.io/presentation-api/">Presentation API</a> which is being developed by the <a href="http://www.w3.org/community/webscreens/">Second Screen Presentation Community Group</a> in W3C.</p>
       </aside>
 
-      <form class="pure-form pure-form-stacked">
-        <label for="url">URL of the slide show to project:</label>
-        <input id="url" name="url" type="text" value="https://tidoust.github.io/slidyremote/slideshow/" list="talks" class="pure-input-1"/>
-        <datalist id="talks">
-          <option value="https://tidoust.github.io/slidyremote/slideshow/" />
-          <option value="https://www.w3.org/Talks/Tools/Slidy2/" />
-          <option value="http://www.w3.org/2011/Talks/1122-mwabp-epita-fd/" />
-          <option value="http://www.w3.org/2009/Talks/03-mobileinternet/" />
-        </datalist>
-        <input type="submit" value="Open slide show" class="pure-button pure-button-primary" />
-      </form>
+      <div class="form">
+        <form class="pure-form pure-form-stacked">
+          <label for="url">URL of the Slidy presentation to project:</label>
+          <input id="url" name="url" type="text" value="https://tidoust.github.io/slidyremote/slideshow/" list="talks" class="pure-input-1"/>
+          <datalist id="talks">
+            <option value="https://tidoust.github.io/slidyremote/slideshow/" />
+            <option value="https://www.w3.org/Talks/Tools/Slidy2/" />
+            <option value="http://www.w3.org/2011/Talks/1122-mwabp-epita-fd/" />
+            <option value="http://www.w3.org/2009/Talks/03-mobileinternet/" />
+          </datalist>
+          <input type="submit" value="Open slide show" class="pure-button pure-button-primary" />
+        </form>
 
-      <section id="error" class="error" hidden>
-        <p></p>
-        <button class="pure-button pure-button-primary">Dismiss error message</button> 
-      </section>
+        <section id="error" class="error" hidden>
+          <p></p>
+          <button class="pure-button pure-button-primary">Dismiss error message</button> 
+        </section>
 
-      <p>Instructions:</p>
-      <ol>
-        <li>Enter the URL of a slide show made with <a href="http://www.w3.org/Talks/Tools/Slidy2/Overview.html">HTML Slidy</a> above. The slide show origin <strong>must be one of <code>http(s)://www.w3.org</code> or <code>https://tidoust.github.io</code></strong>.</li>
-        <li>Hit "<em>Open slide show</em>". The slide show will open on a second screen if available or in a separate window otherwise, provided you allow that window to pop up!</li>
-        <li>Use the Slidy remote on this page to control the running slide show (key presses and gestures are supported as well)</li>
-      </ol>
+        <p>Instructions:</p>
+        <ol>
+          <li><strong>Enter the URL of a slide show</strong> made with <a href="http://www.w3.org/Talks/Tools/Slidy2/Overview.html">HTML Slidy</a> above.
+            <br/>The slide show origin must be one of <code>http(s)://www.w3.org</code> or <code>https://tidoust.github.io</code>.</li>
+          <li><strong>Hit "<em>Open slide show</em>"</strong>
+            <br/>The slide show will open on a second screen if available or in a separate window otherwise.
+            <br/>Ensure this page is allowed to open pop-up windows!</li>
+          <li><strong>Use the Slidy remote on this page</strong> to control the running slide show.
+            <br/>Key presses and gestures are supported as well</li>
+        </ol>
+      </div>
 
       <aside class="warning">
-        <p><strong>Support for second screens only works in Google Chrome under certain conditions</strong>, see <a href="#implementation">Implementation details</a>.
+        <p><strong>Support for actual second screens only works in Google Chrome under certain conditions</strong>, see <a href="#implementation">Implementation details</a>.
           <br/>The demo falls back to opening the slide show in a pop-up window when it cannot find second screens.
           <br/>Your browser may block the pop-up window by default.</p>
         <p>The code also uses a couple of advanced JavaScript features (e.g. <code>Promise</code>, <code>Object.keys</code>, <code>URL</code>) that are not yet supported on all Web browsers.</p>
@@ -64,7 +70,7 @@
       <section id="implementation">
         <h2>Implementation details</h2>
 
-        <p>The <a href="http://github.com/tidoust/slidyremote">source code</a> is available on GitHub.</p>
+        <p>The <a href="http://github.com/tidoust/slidyremote">source code</a> is available on GitHub under a <a href="http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231">W3C Software license</a>.</p>
 
         <h3>Presentation API shim</h3>
         <p>Under the hoods, the demo uses a <a href="presentation-api-shim.js">JavaScript shim</a> of the Presentation API that supports:</p>
@@ -84,18 +90,19 @@
         </dl>
 
         <h3>How the demo works</h3>
-        <p>When the user requests to present the given slide show, the code of this page calls <code>navigator.presentation.requestSession</code> to open the appropriate HTML Slidy receiver application on a second screen. That returns a <code>PresentationSession</code> object used to instruct the HTML Slidy receiver application to open the requested slide show and to send Slidy commands afterwards.</p>
+
+        <p>When the user requests to present the given slide show, this page calls <code>navigator.presentation.requestSession</code> to open the appropriate HTML Slidy receiver application on a second screen. The call returns a <code>PresentationSession</code> object. The page then uses that object to have the HTML Slidy receiver application open the requested slide show and to send Slidy commands afterwards.</p>
 
         <p>The HTML Slidy receiver application is an empty page that listens to messages it receives from <code>navigator.presentation.onmessage</code>. When it receives the appropriate message, it loads the requested slide show in a child <code>iframe</code> that takes up 100% of the viewport and controls the Slidy instance of the slide show within that iframe in reaction to further presentation messages it receives.</p>
 
-        <p>Due to usual security restrictions, the origins of the HTML Slidy receiver application and of the slide show <strong>must</strong> match, otherwise the receiver application cannot control the slide show. This page only knows of two HTML Slidy receiver applications:</p>
+        <p>Due to usual security restrictions, the origins of the HTML Slidy receiver application and of the slide show <strong>must</strong> match. The receiver application would not be able to control the slide show otherwise. This page only knows of two HTML Slidy receiver applications:</p>
         <ul>
           <li>The receiver that ships with this page, bound to <code>https://tidoust.github.io</code></li>
           <li>A receiver that runs on the W3C Web site, bound to <code>https://www.w3.org</code></li>
         </ul>
-        <p>You may extend the code to support receiver applications on other domain names.</li>
+        <p>You may extend the code to support receiver applications on other domain names. Both HTML Slidy receiver applications have been registered with Google and may run on any Chromecast device.</li>
 
-        <h3>Why using an iframe on the receiving side?</h3>
+        <h3>Why use an iframe on the receiving side?</h3>
         <p>Since the <code>iframe</code> triggers the same origin constraint, it would be tempting to drop it altogether. It could be done in theory provided HTML Slidy is updated to listen to <code>navigator.presentation.onmessage</code> events.</p>
 
         <p>In practice, this would require slide shows to use that updated (and likely unstable) version of HTML Slidy, which is probably not a good idea for <em>actual</em> slide shows. Also note that there is no way to run arbitrary receiver applications with Google Cast devices for the time being: any receiver application must first be registered with Google. Having to register all existing slide shows would be somewhat tedious.</p>
@@ -109,6 +116,11 @@
           <li>no way to interact with the table of contents</li>
           <li>no way to interact with contents on the slide show (e.g. video controls)</li>
         </ul>
+
+        <h3>Contact</h3>
+        <p>For feedback on the demo or on the Presentation API itself, use the <a href="mailto:public-webscreens@w3.org">public-webscreens@w3.org</a> mailing-list (with <a href="http://lists.w3.org/Archives/Public/public-webscreens">public archive</a>) or get in touch with <a href="mailto:fd@w3.org">Francois Daoust</a> if you do not wish your comment to appear in public.</p>
+
+        <p>Feel free to use <a href="http://github.com/tidoust/slidyremote/issues">GitHub issue tracker</a> to report bugs and feature requests.</p>
       </section>
     </div>
 
