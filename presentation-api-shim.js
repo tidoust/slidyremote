@@ -554,10 +554,16 @@
 
         window.addEventListener('message', function (event) {
           if ((event.source === presentationWindow) &&
-              (event.data === 'receiverready')) {
-            log('received "I am ready" message from presentation window');
+              (event.data === 'ispresentation')) {
+            log('received "is this a presentation session?" message ' +
+              'from presentation window');
             log('post "presentation" message to presentation window');
             presentationWindow.postMessage('presentation', '*');
+          }
+          else if ((event.source === presentationWindow) &&
+              (event.data === 'presentationready')) {
+            log('received "presentation ready" message ' +
+              'from presentation window');
             resolve(new WindowPresentationSession(presentationWindow));
           }
         }, false);
@@ -570,7 +576,7 @@
      * receiver application.
      *
      * To determine whether that is the case, the code dispatches a
-     * "receiverready" message to its opener window (if defined) and
+     * "ispresentation" message to its opener window (if defined) and
      * waits for a "presentation" ack from that opener window.
      *
      * @function
@@ -600,11 +606,11 @@
 
         window.addEventListener('message', messageEventListener, false);
         window.addEventListener('load', function () {
-          log('post "receiverready" message to opener window ' +
+          log('post "ispresentation" message to opener window ' +
             'and wait for "presentation" message');
           log('assume code is not running in a presentation window ' +
             'in the meantime');
-          window.opener.postMessage('receiverready', '*');
+          window.opener.postMessage('ispresentation', '*');
         }, false);
         window.addEventListener('unload', function () {
           log('presentation window is being closed');
@@ -731,7 +737,11 @@
     var that = this;
 
     // Initializes presentation receiver bindings, dispatching the appropriate
-    // "present" event if needed. 3 cases arise:
+    // "present" event if needed and a final "presentationready" message to the
+    // sender (only useful for window presentations, Google Cast devices
+    // apparently only report that the connection is ready when all this code
+    // has run.
+    // 3 cases arise:
     // 1. shim is running on a Google Cast device, and so running in a Google
     // Cast receiver application. The event is fired.
     // 2. shim is running in a window opened by some other window in response
@@ -752,6 +762,8 @@
             session: session
           });
         }
+        log('info', 'tell sender that presentation receiver app is ready');
+        session.postMessage('presentationready');
       }, function () {
         log('info', 'no, code is not running in a presentation receiver app');
       });
