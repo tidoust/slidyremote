@@ -605,13 +605,11 @@
         };
 
         window.addEventListener('message', messageEventListener, false);
-        window.addEventListener('load', function () {
-          log('post "ispresentation" message to opener window ' +
-            'and wait for "presentation" message');
-          log('assume code is not running in a presentation window ' +
-            'in the meantime');
-          window.opener.postMessage('ispresentation', '*');
-        }, false);
+        log('post "ispresentation" message to opener window ' +
+          'and wait for "presentation" message');
+        log('assume code is not running in a presentation window ' +
+          'in the meantime');
+        window.opener.postMessage('ispresentation', '*');
         window.addEventListener('unload', function () {
           log('presentation window is being closed');
           if (window.opener) {
@@ -747,26 +745,28 @@
     // 2. shim is running in a window opened by some other window in response
     // to a call to navigator.presentation.requestSession. The event is fired.
     // 3. shim in running in regular Web app. No event fired.
-    log('info', 'check whether code is running in a presentation receiver app');
-    CastPresentationSession.startReceiver()
-      .then(function (session) {
-        return session;
-      }, function () {
-        return WindowPresentationSession.startReceiver();
-      })
-      .then(function (session) {
-        log('info', 'yes, code is running in a presentation receiver app');
-        if (that.onpresent) {
-          log('dispatch "present" message');
-          that.onpresent({
-            session: session
-          });
-        }
-        log('info', 'tell sender that presentation receiver app is ready');
-        session.postMessage('presentationready');
-      }, function () {
-        log('info', 'no, code is not running in a presentation receiver app');
-      });
+    window.addEventListener('load', function () {
+      log('info', 'check whether code is running in a presentation receiver app');
+      CastPresentationSession.startReceiver()
+        .then(function (session) {
+          return session;
+        }, function () {
+          return WindowPresentationSession.startReceiver();
+        })
+        .then(function (session) {
+          log('info', 'yes, code is running in a presentation receiver app');
+          if (that.onpresent) {
+            log('dispatch "present" message');
+            that.onpresent({
+              session: session
+            });
+          }
+          log('info', 'tell sender that presentation receiver app is ready');
+          session.postMessage('presentationready');
+        }, function () {
+          log('info', 'no, code is not running in a presentation receiver app');
+        });
+    }, false);
   };
 
 
