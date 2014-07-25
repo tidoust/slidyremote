@@ -28,6 +28,14 @@
 
 
   /**
+   * Gesture change handler (defined separately to be able to remove it)
+   */
+  var gesturechangeHandler = function () {
+    return false;
+  };
+
+
+  /**
    * Binds Slidy commands to the given PresentationSession
    *
    * All Slidy commands will be sent to that session from now on, if possible
@@ -44,10 +52,7 @@
 
     this.add_listener(document, 'keydown', this.key_down);
     this.add_listener(document, 'keypress', this.key_press);
-    this.add_listener(document, 'gesturechange', function ()
-    {
-      return false;
-    });
+    this.add_listener(document, 'gesturechange', gesturechangeHandler);
     this.add_listener(document, 'touchstart', this.touchstart);
     this.add_listener(document, 'touchmove', this.touchmove);
     this.add_listener(document, 'touchend', this.touchend);
@@ -62,7 +67,7 @@
   window.w3c_slidy.closePresentation = function () {
     document.removeEventListener('keydown', this.key_down);
     document.removeEventListener('keypress', this.key_press);
-    document.removeEventListener('gesturechange');
+    document.removeEventListener('gesturechange', gesturechangeHandler);
     document.removeEventListener('touchstart', this.touchstart);
     document.removeEventListener('touchmove', this.touchmove);
     document.removeEventListener('touchend', this.touchend);
