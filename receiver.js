@@ -29,7 +29,7 @@ window.onload = function () {
         return;
       }
       if (message.cmd === 'open') {
-        console.log('open slideshow at "' + message.url + '"');
+        console.info('open slideshow at "' + message.url + '"');
         iframe.src = message.url;
       }
       else if (!controlledSlidy) {

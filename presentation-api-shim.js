@@ -35,7 +35,7 @@
  *     the underlying context
  * The first two parts could be moved to their own JS file, modules are not
  * used here not to have to introduce dependencies to some module loader
- * importlibrary.import
+ * library.
  *
  * References:
  * [1] http://webscreens.github.io/presentation-api/
@@ -43,6 +43,45 @@
  * [3] https://www.gstatic.com/cv/js/sender/v1/cast_sender.js
  */
 (function () {
+  /**********************************************************************
+  Simple console logger to help with debugging. Caller may change logging
+  level by setting navigator.presentationLogLevel to one of "log", "info",
+  "warn", "error" or "none" (or null which also means "none").
+
+  Note this should be done before that shim is loaded!
+  **********************************************************************/
+  var log = function () {
+    var presentationLogLevel = navigator.presentationLogLevel || 'none';
+    if ((presentationLogLevel === 'none') || (arguments.length === 0)) {
+      return;
+    }
+
+    var level = arguments[0];
+    var params = null;
+    if ((level === 'log') ||
+        (level === 'info') ||
+        (level === 'warn') ||
+        (level === 'error')) {
+      // First parameter is the log level
+      params = Array.prototype.slice.call(arguments, 1);
+    }
+    else {
+      // No log level provided, assume "log"
+      level = 'log';
+      params = Array.prototype.slice.call(arguments);
+    }
+    if ((level === 'error') ||
+        ((level === 'warn') &&
+          (presentationLogLevel !== 'error')) ||
+        ((level === 'info') &&
+          (presentationLogLevel !== 'error') &&
+          (presentationLogLevel !== 'warn')) ||
+        ((level === 'log') &&
+          (presentationLogLevel === 'log'))) {
+      console[level].apply(console, params);
+    }
+  };
+
 
   /**********************************************************************
   Exposes a CastPresentationSession class that implements the
@@ -67,9 +106,12 @@
     var castApiAvailable = false;
     window['__onGCastApiAvailable'] = function (loaded, errorInfo) {
       if (loaded) {
+        log('Google Cast API library is available and loaded');
         castApiAvailable = true;
       } else {
-        console.log(errorInfo);
+        log('warn',
+          'Google Cast API library is available but could not be loaded',
+          errorInfo);
       }
     };
 
@@ -112,6 +154,7 @@
       var that = this;
       this.session.addUpdateListener(function (isAlive) {
         that.state = isAlive ? 'connected' : 'disconnected';
+        log('received Cast session state update', 'isAlive=' + isAlive);
         if (that.onstatechange) {
           that.onstatechange(that.state);
         }
@@ -119,6 +162,7 @@
 
       var namespace = this.session.namespaces[0];
       this.session.addMessageListener(namespace, function (namespace, message) {
+        log('received message from Cast receiver', message);
         if (that.onmessage) {
           that.onmessage(message);
         }
@@ -136,6 +180,7 @@
       if (this.state !== 'connected') {
         return;
       }
+      log('post message to Cast receiver', message);
       var namespace = this.session.namespaces[0];
       this.session.sendMessage(namespace.name, message);
     };
@@ -150,6 +195,7 @@
       if (this.state !== 'connected') {
         return;
       }
+      log('close Cast session');
       this.session.stop();
     };
 
@@ -179,11 +225,15 @@
     CastPresentationSession.create = function (url) {
       return new Promise(function (resolve, reject) {
         if (!castApiAvailable) {
+          log('cannot create Cast session',
+            'Google Cast API library is not available');
           reject();
           return;
         }
 
         if (!castApplications[url]) {
+          log('cannot create Cast session',
+            'no receiver app known for url', url);
           reject();
           return;
         }
@@ -193,9 +243,9 @@
         var sessionRequest = new chrome.cast.SessionRequest(applicationId);
 
         var requestSession = function () {
-          console.log('request Cast session');
+          log('request new Cast session for url', url);
           chrome.cast.requestSession(function (session) {
-            console.log('got a new Cast session');
+            log('got a new Cast session');
             sessionCreated = true;
             resolve(new CastPresentationSession(url, session));
           }, function (error) {
@@ -203,13 +253,13 @@
               return;
             }
             if (error.code === 'cancel') {
-              console.info('User chose not to use Cast device');
+              log('info', 'user chose not to use Cast device');
             }
             else if (error.code === 'receiver_unavailable') {
-              console.info('No compatible Cast device found');
+              log('info', 'no compatible Cast device found');
             }
             else {
-              console.error('Could not create Cast session', error);
+              log('error', 'could not create Cast session', error);
             }
             reject();
           }, sessionRequest);
@@ -220,7 +270,7 @@
           function sessionListener(session) {
             // Method called at most once after initialization if a running
             // Cast session may be resumed
-            console.log('Cast session already exists, reusing');
+            log('found existing Cast session, reusing');
             sessionCreated = true;
             resolve(new CastPresentationSession(url, session));
           },
@@ -229,34 +279,39 @@
             // the local network changes. The method is called at least once
             // after initialization. We're interested in that first call.
             if (sessionCreated) {
-              console.log('receiver listener called after session creation');
               return;
             }
 
             // Reject creation if there are no Google Cast devices that
             // can handle the application.
             if (available !== chrome.cast.ReceiverAvailability.AVAILABLE) {
-              console.log('no Cast device available');
+              log('cannot create Cast session',
+                'no Cast device available for url', url);
               reject();
             }
 
+            log('found at least one compatible Cast device');
             requestSession();
           });
 
         if (castApiInitialized) {
           // The Cast API library has already been initialized, call
           // requestSession directly.
+          log('Google Cast API library already initialized',
+            'request new Cast session');
           requestSession();
         }
         else {
           // The Cast API library first needs to be initialized
+          log('initialize Google Cast API library for url', url);
           chrome.cast.initialize(apiConfig, function () {
             // Note actual session creation is handled by callback functions
             // defined above
-            console.log('Cast API initialized');
+            log('Google Cast API library initialized');
             castApiInitialized = true;
           }, function (err) {
-            console.error('Cast API could not be initialized', err);
+            log('error',
+              'Google Cast API library could not be initialized', err);
             reject();
             return;
           });
@@ -286,6 +341,7 @@
         // https://code.google.com/p/google-cast-sdk/issues/detail?id=157
         var runningOnChromecast = !!window.navigator.userAgent.match(/CrKey/);
         if (!runningOnChromecast) {
+          log('code is not running on a Google Cast device');
           reject();
           return;
         }
@@ -294,10 +350,13 @@
         // Note the need to create the CastReceiverSession before the call to
         // "start", as that class registers the namespace used for the
         // communication channel.
+        log('code is running on a Google Cast device',
+          'start Google Cast receiver manager');
         var castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
         var session = new CastReceiverSession(castReceiverManager);
         castReceiverManager.start();
         castReceiverManager.onReady = function () {
+          log('Google Cast receiver manager started');
           resolve(session);
         };
 
@@ -332,6 +391,7 @@
 
       var that = this;
       this.customMessageBus.addEventListener('message', function (event) {
+        log('received message from Cast sender', event.data);
         if (that.onmessage) {
           that.onmessage(event.data);
         }
@@ -352,6 +412,7 @@
       if (this.state !== 'connected') {
         return;
       }
+      log('post message to Cast sender', message);
       this.customMessageBus.broadcast(message);
     };
 
@@ -370,6 +431,7 @@
       if (this.state !== 'connected') {
         return;
       }
+      log('stop Cast receiver manager');
       this.state = 'disconnected';
       this.castReceiverManager.stop();
     };
@@ -421,12 +483,15 @@
       window.addEventListener('message', function (event) {
         if (event.source === remoteWindow) {
           if (event.data === 'receivershutdown') {
+            log('received shut down message from presentation window',
+              'disconnect session');
             that.state = 'disconnected';
             if (that.onstatechange) {
               that.onstatechange(that.state);
             }
           }
           else {
+            log('received message from presentation window', event.data);
             if (that.onmessage) {
               that.onmessage(event.data);
             }
@@ -443,6 +508,10 @@
      * @param {String} msg
      */
     WindowPresentationSession.prototype.postMessage = function (msg) {
+      if (this.state !== 'connected') {
+        return;
+      }
+      log('post message to presentation window', msg);
       this.remoteWindow.postMessage(msg, '*');
     };
 
@@ -456,6 +525,7 @@
       if (this.state !== 'connected') {
         return;
       }
+      log('close presentation window');
       this.remoteWindow.close();
       this.state = 'disconnected';
       if (this.onstatechange) {
@@ -474,8 +544,10 @@
      */
     WindowPresentationSession.create = function (url) {
       return new Promise(function (resolve, reject) {
+        log('open presentation window');
         var presentationWindow = window.open(url, '', 'presentation');
         if (!presentationWindow) {
+          log('could not open presentation window');
           reject();
           return;
         }
@@ -483,6 +555,8 @@
         window.addEventListener('message', function (event) {
           if ((event.source === presentationWindow) &&
               (event.data === 'receiverready')) {
+            log('received "I am ready" message from presentation window');
+            log('post "presentation" message to presentation window');
             presentationWindow.postMessage('presentation', '*');
             resolve(new WindowPresentationSession(presentationWindow));
           }
@@ -509,6 +583,7 @@
       return new Promise(function (resolve, reject) {
         // No window opener? The code does not run a receiver app.
         if (!window.opener) {
+          log('code is not running in a presentation window');
           reject();
           return;
         }
@@ -516,6 +591,8 @@
         var messageEventListener = function (event) {
           if ((event.source === window.opener) &&
               (event.data === 'presentation')) {
+            log('received "presentation" message from opener window');
+            log('code is running in a presentation window');
             window.removeEventListener('message', messageEventListener);
             resolve(new WindowPresentationSession(window.opener));
           }
@@ -523,9 +600,14 @@
 
         window.addEventListener('message', messageEventListener, false);
         window.addEventListener('load', function () {
+          log('post "receiverready" message to opener window ' +
+            'and wait for "presentation" message');
+          log('assume code is not running in a presentation window ' +
+            'in the meantime');
           window.opener.postMessage('receiverready', '*');
         }, false);
         window.addEventListener('unload', function () {
+          log('presentation window is being closed');
           if (window.opener) {
             window.opener.postMessage('receivershutdown', '*');
           }
@@ -563,14 +645,20 @@
 
     // Try with a Google Cast presentation session first,
     // then with a window presentation session.
+    log('info', 'new presentation session requested for url', url);
+    log('try to create a Cast session');
     var that = this;
     CastPresentationSession.create(url)
       .then(function (session) {
+        log('Cast presentation session created');
         return session;
       }, function () {
+        log('Cast session could not be created');
+        log('try to create a presentation window instead');
         return WindowPresentationSession.create(url);
       })
       .then(function (session) {
+        log('info', 'presentation session created');
         that.session = session;
         that.state = session.state;
         that.session.onmessage = function (message) {
@@ -590,7 +678,7 @@
           }
         }
       }, function () {
-        console.warn('could not create presentation session on second screen');
+        log('warn', 'could not create presentation session');
         that.state = 'disconnected';
         if (that.onstatechange) {
           that.onstatechange();
@@ -607,11 +695,11 @@
    */
   PresentationSession.prototype.postMessage = function (message) {
     if (!this.session) {
-      console.log('Presentation session not available, cannot send message');
+      log('Presentation session not available, cannot send message');
       return;
     }
     if (this.state === 'disconnected') {
-      console.log('Presentation session is disconnected, cannot send message');
+      log('Presentation session is disconnected, cannot send message');
       return;
     }
     this.session.postMessage(message);
@@ -649,6 +737,7 @@
     // 2. shim is running in a window opened by some other window in response
     // to a call to navigator.presentation.requestSession. The event is fired.
     // 3. shim in running in regular Web app. No event fired.
+    log('info', 'check whether code is running in a presentation receiver app');
     CastPresentationSession.startReceiver()
       .then(function (session) {
         return session;
@@ -656,15 +745,15 @@
         return WindowPresentationSession.startReceiver();
       })
       .then(function (session) {
-        console.log('code is running in a receiver app');
+        log('info', 'yes, code is running in a presentation receiver app');
         if (that.onpresent) {
-          console.log('dispatch "present" message');
+          log('dispatch "present" message');
           that.onpresent({
             session: session
           });
         }
       }, function () {
-        console.log('code is not running in a receiver app');
+        log('info', 'no, code is not running in a presentation receiver app');
       });
   };
 
